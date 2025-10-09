@@ -1,32 +1,30 @@
 import { GetServerSideProps } from 'next'
 
 export const getServerSideProps: GetServerSideProps = async () => {
-  // 🔍 Lista das variáveis essenciais
   const requiredEnv = [
     'DATABASE_URL',
     'NEXTAUTH_URL',
     'NEXTAUTH_SECRET',
     'SUPABASE_URL',
-    'SUPABASE_ANON_KEY',
+    'PUBLIC_SUPABASE_ANON_KEY',
   ]
-
-  // 🔎 Log no servidor (visível nos Logs da Vercel)
-  console.log('===== VARIÁVEIS DE AMBIENTE DETECTADAS PELA VERCEL =====')
-  requiredEnv.forEach((key) => {
-    if (process.env[key]) {
-      console.log(`${key}: OK ✅`)
-    } else {
-      console.log(`${key}: MISSING ❌`)
-    }
-  })
-  console.log('=========================================================')
 
   const missing = requiredEnv.filter((key) => !process.env[key])
 
+  if (missing.length > 0) {
+    console.warn('⚠️ Missing environment variables:', missing)
+    return {
+      props: {
+        envError: missing.length > 0,
+        missing,
+      },
+    }
+  }
+
+  // Se todas as variáveis estão corretas, renderiza normalmente
   return {
     props: {
-      envError: missing.length > 0,
-      missing,
+      envError: false,
     },
   }
 }
@@ -58,17 +56,30 @@ export default function Home({
             ))}
           </ul>
         )}
-        <p style={{ marginTop: 20 }}>
-          Veja os logs do deploy na Vercel → “Functions / Logs” para detalhes.
-        </p>
+        <p>Verifique as Environment Variables no painel da Vercel (Settings → Environment Variables → Production)</p>
       </div>
     )
   }
 
+  // ✅ Aqui você pode colocar a tela principal (login, dashboard, etc.)
   return (
     <div style={{ padding: 40, textAlign: 'center', fontFamily: 'sans-serif' }}>
-      <h1>✅ Task Manager</h1>
-      <p>Todas as variáveis foram detectadas com sucesso!</p>
+      <h1>Task Manager</h1>
+      <p>Bem-vindo!</p>
+      <a
+        href="/login"
+        style={{
+          display: 'inline-block',
+          marginTop: 20,
+          padding: '10px 20px',
+          background: '#2563eb',
+          color: 'white',
+          borderRadius: 8,
+          textDecoration: 'none',
+        }}
+      >
+        Ir para Login
+      </a>
     </div>
   )
 }

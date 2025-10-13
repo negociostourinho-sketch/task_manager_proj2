@@ -20,9 +20,14 @@ model User {
   updatedAt  DateTime    @updatedAt
 }
 
+enum ProjectType {
+  PROJECT
+  COMPANY
+}
+
 model Project {
   id          String      @id @default(cuid())
-  type        String
+  type        ProjectType  @default(COMPANY)
   name        String
   description String?
   value       Float?

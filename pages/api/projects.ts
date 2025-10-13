@@ -64,9 +64,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
       const { name, description } = req.body
       const newProject = await prisma.project.create({
-        data: {
-          name,
-          description,
+    data: {
+      name,
+      description,
+      type: 'PROJECT',
         },
       })
       return res.status(201).json(newProject)

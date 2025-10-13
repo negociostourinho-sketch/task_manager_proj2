@@ -12,70 +12,73 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ error: 'Não autorizado' })
   }
 
-  if (req.method === 'GET') {
-    try {
-      const projects = await prisma.project.findMany({
-        include: {
-          tasks: true,
-          checklists: true,
-        },
-        orderBy: { createdAt: 'desc' },
-      })
+  switch (req.method) {
+    case 'GET':
+      return await getProjects(res)
+    case 'POST':
+      return await createProject(req, res)
+    default:
+      return res.status(405).json({ error: 'Método não permitido' })
+  }
+}
 
-      const formatted = projects.map((project) => {
-        const overdueTasks = project.tasks.filter(
-          (t) => t.status === 'OVERDUE'
-        ).length
-        const completedTasks = project.tasks.filter(
-          (t) => t.status === 'COMPLETED'
-        ).length
-        const upcomingTasks = project.tasks.filter(
-          (t) => t.status === 'PENDING'
-        ).length
+async function getProjects(res: NextApiResponse) {
+  try {
+    const projects = await prisma.project.findMany({
+      include: {
+        tasks: true,
+        checklists: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    })
 
-        const overdueChecklists = project.checklists.filter(
-          (c) => c.status === 'OVERDUE'
-        ).length
-        const completedChecklists = project.checklists.filter(
-          (c) => c.status === 'COMPLETED'
-        ).length
-        const upcomingChecklists = project.checklists.filter(
-          (c) => c.status === 'PENDING'
-        ).length
+    const formatted = projects.map((project) => {
+      const overdueTasks = project.tasks.filter((t) => t.status === 'OVERDUE').length
+      const completedTasks = project.tasks.filter((t) => t.status === 'COMPLETED').length
+      const upcomingTasks = project.tasks.filter((t) => t.status === 'PENDING').length
 
-        return {
-          id: project.id,
-          name: project.name,
-          overdueTasks,
-          completedTasks,
-          upcomingTasks,
-          overdueChecklists,
-          completedChecklists,
-          upcomingChecklists,
-        }
-      })
+      const overdueChecklists = project.checklists.filter((c) => c.status === 'OVERDUE').length
+      const completedChecklists = project.checklists.filter((c) => c.status === 'COMPLETED').length
+      const upcomingChecklists = project.checklists.filter((c) => c.status === 'PENDING').length
 
-      return res.status(200).json(formatted)
-    } catch (error) {
-      console.error('Erro ao buscar projetos:', error)
-      return res.status(500).json({ error: 'Erro interno ao buscar projetos' })
+      return {
+        id: project.id,
+        name: project.name,
+        overdueTasks,
+        completedTasks,
+        upcomingTasks,
+        overdueChecklists,
+        completedChecklists,
+        upcomingChecklists,
+      }
+    })
+
+    return res.status(200).json(formatted)
+  } catch (error) {
+    console.error('Erro ao buscar projetos:', error)
+    return res.status(500).json({ error: 'Erro interno ao buscar projetos' })
+  }
+}
+
+async function createProject(req: NextApiRequest, res: NextApiResponse) {
+  try {
+    const { name, description } = req.body
+
+    if (!name) {
+      return res.status(400).json({ error: 'O campo nome é obrigatório' })
     }
-  } else if (req.method === 'POST') {
-    try {
-      const { name, description } = req.body
-      const newProject = await prisma.project.create({
-    data: {
-      name,
-      description,
-      type: 'PROJECT',
-        },
-      })
-      return res.status(201).json(newProject)
-    } catch (error) {
-      console.error('Erro ao criar projeto:', error)
-      return res.status(500).json({ error: 'Erro ao criar projeto' })
-    }
-  } else {
-    return res.status(405).json({ error: 'Método não permitido' })
+
+    const newProject = await prisma.project.create({
+      data: {
+        name,
+        description,
+        type: 'PROJECT', // ✅ campo exigido pelo Prisma
+      },
+    })
+
+    return res.status(201).json(newProject)
+  } catch (error) {
+    console.error('Erro ao criar projeto:', error)
+    return res.status(500).json({ error: 'Erro ao criar projeto' })
   }
 }

@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
-import { useSession } from 'next-auth/react'
-import DonutChart from '../components/DonutChart'
+import { getSession, useSession } from "next-auth/react"
+import { useEffect, useState } from "react"
+import DonutChart from "@/components/DonutChart"
 
 interface Project {
   id: string
@@ -14,46 +14,46 @@ interface Project {
 }
 
 export default function Dashboard() {
-  const { data: session, status } = useSession()
+  const { data: session } = useSession()
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (status === 'authenticated') {
-      fetchProjects()
-    }
-  }, [status])
+    if (session) fetchProjects()
+  }, [session])
 
   async function fetchProjects() {
     try {
-      const res = await fetch('/api/projects')
-      if (!res.ok) throw new Error('Erro ao buscar projetos.')
+      const res = await fetch("/api/projects")
+      if (!res.ok) throw new Error("Erro ao buscar projetos.")
       const data = await res.json()
       setProjects(data)
     } catch (err) {
-      setError('Erro ao carregar projetos.')
       console.error(err)
+      setError("Erro ao carregar projetos.")
     } finally {
       setLoading(false)
     }
   }
 
-  if (status === 'loading' || loading) {
+  if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen text-gray-600">
-        Carregando dashboard...
+      <div className="flex items-center justify-center h-screen text-gray-500">
+        Carregando Dashboard...
       </div>
     )
   }
 
   if (!session) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen text-gray-600">
-        <p>Você precisa estar logado para acessar o dashboard.</p>
+      <div className="flex flex-col items-center justify-center h-screen">
+        <p className="text-gray-700 mb-2">
+          Você precisa estar logado para acessar o dashboard.
+        </p>
         <a
           href="/login"
-          className="text-blue-600 underline hover:text-blue-800 mt-2"
+          className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
         >
           Ir para o Login
         </a>
@@ -69,6 +69,8 @@ export default function Dashboard() {
     )
   }
 
+  const userName =
+    session?.user?.name?.split(" ")[0] || "usuário"
   const totalTasks = projects.reduce(
     (acc, p) =>
       acc +
@@ -83,28 +85,28 @@ export default function Dashboard() {
 
   const chartData = [
     {
-      name: 'Atrasados',
+      name: "Atrasados",
       value: projects.reduce(
         (acc, p) => acc + p.overdueTasks + p.overdueChecklists,
         0
       ),
-      color: '#EF4444',
+      color: "#EF4444",
     },
     {
-      name: 'Concluídos',
+      name: "Concluídos",
       value: projects.reduce(
         (acc, p) => acc + p.completedTasks + p.completedChecklists,
         0
       ),
-      color: '#10B981',
+      color: "#10B981",
     },
     {
-      name: 'Futuros',
+      name: "Futuros",
       value: projects.reduce(
         (acc, p) => acc + p.upcomingTasks + p.upcomingChecklists,
         0
       ),
-      color: '#3B82F6',
+      color: "#3B82F6",
     },
   ]
 
@@ -114,7 +116,7 @@ export default function Dashboard() {
         <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
         <a
           href="/api/auth/signout"
-          className="bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition"
+          className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition"
         >
           Sair
         </a>
@@ -141,15 +143,14 @@ export default function Dashboard() {
             </p>
             <ul className="space-y-1 text-sm text-gray-600">
               <li>
-                🔴 Atrasados:{' '}
-                {project.overdueTasks + project.overdueChecklists}
+                🔴 Atrasados: {project.overdueTasks + project.overdueChecklists}
               </li>
               <li>
-                🟢 Concluídos:{' '}
+                🟢 Concluídos:{" "}
                 {project.completedTasks + project.completedChecklists}
               </li>
               <li>
-                🔵 Futuros:{' '}
+                🔵 Futuros:{" "}
                 {project.upcomingTasks + project.upcomingChecklists}
               </li>
             </ul>
@@ -158,4 +159,19 @@ export default function Dashboard() {
       </div>
     </div>
   )
+}
+// 🔒 SSR: evita erro de build e garante autenticação
+export async function getServerSideProps(context: any) {
+  const session = await getSession(context)
+  if (!session) {
+    return {
+      redirect: {
+        destination: "/login",
+        permanent: false,
+      },
+    }
+  }
+  return {
+    props: { session },
+  }
 }

@@ -15,11 +15,12 @@
     "jsx": "preserve",
     "incremental": true,
     "baseUrl": ".",
+    "types":["next-auth"],
     "paths": {
       "@/*":["./*"]
     }
 },
 
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx","tyoes/**/.d.ts"],
   "exclude": ["node_modules"]
  }

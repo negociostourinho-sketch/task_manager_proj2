@@ -12,15 +12,16 @@ export default function LoginPage() {
     setLoading(true)
     setError(null)
 
-    const res = await signIn('credentials', {
+    const result = await signIn('credentials', {
       redirect: false,
       email,
       password,
+      callbackUrl: "/dashboard",
     })
 
     setLoading(false)
 
-    if (res?.error) {
+    if (result?.error) {
       setError('Credenciais inválidas. Tente novamente.')
     } else {
       window.location.href = '/dashboard'

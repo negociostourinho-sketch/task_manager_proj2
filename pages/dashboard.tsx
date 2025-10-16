@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
-import DonutChart from '@/components/DonutChart'
+import DonutChart from '../components/DonutChart'
 
 interface Project {
   id: string
